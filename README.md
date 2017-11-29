@@ -26,7 +26,14 @@ The next plot shows the evolution of the information plane. This plots the mutua
 
 ![](plots/final/Mutual_information50.png)
 
+## Code
+- `initalize.py` Build, train, and runs network. Plots can be created from running this file. Change `epochs_list = [2, 100, 250, 500, 1000, 5000]` to create plots at different epoch snapshots. Code framework based on tutorial code (Reference 3).
+- `calc_info.py` Extracts information from neural network. Code based from source code (Reference 2), but I simplified it by removing unnecessary parameters.
+- `mutual_information_calc.py` Calculates mutual information. Code from source code (Reference 2).
+- `var_u.mat` Dataset for neural network
+- `plots` Folder containing plots
+
 ## References
-https://arxiv.org/abs/1703.00810 Research Paper
-https://github.com/ravidziv/IDNNs Source Code
-https://pythonprogramming.net/tensorflow-neural-network-session-machine-learning-tutorial/?completed=/tensorflow-deep-neural-network-machine-learning-tutorial/ Deep Neural Network Tutorial Code
+1. https://arxiv.org/abs/1703.00810 Research Paper
+2. https://github.com/ravidziv/IDNNs Source Code
+3. https://pythonprogramming.net/tensorflow-neural-network-session-machine-learning-tutorial/?completed=/tensorflow-deep-neural-network-machine-learning-tutorial/ Deep Neural Network Tutorial Code

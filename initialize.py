@@ -195,7 +195,7 @@ def plot_info_plane(i, I_XT_array, I_TY_array):
 # -- RUN NEURAL NETWORK AND CREATE PLOTS -- #
 #############################################
 
-epochs_list = [250]
+epochs_list = [2, 100, 250, 500, 1000, 5000]
 for i in epochs_list:
     print("CURRENTLY ON EPOCH NUM", i)
     I_XT_array = np.array([])
