@@ -171,15 +171,6 @@ def train_neural_network(x, num_epochs):
             'Accuracy_train:',accuracy.eval({x:train_data, y:train_labels}))
     return ws
 
-# np.random.seed(2)
-# network_10 = train_neural_network(x, 10)
-# network_10_info = get_information(info, data, labels)
-# network_10_info = np.squeeze(np.array(network_10_info))
-# I_XT_array = np.array(extract_array(network_10_info, 'local_IXT'))
-# I_TY_array = np.array(extract_array(network_10_info, 'local_ITY'))
-# plt.plot(I_XT_array, I_TY_array)
-# plt.title(10)
-# plt.show()
 
 # train_neural_network(x, 10)
 # train_neural_network(x, 50)
@@ -192,15 +183,24 @@ def train_neural_network(x, num_epochs):
 
 
 # Train networks of varying number of epochs and calculate mutual information between layers
-epochs_list = [5]
+epochs_list = [100, 400, 1000]
+color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b'] * 10
 for i in epochs_list:
     print("CURRENTLY ON EPOCH NUM", i)
-    network = train_neural_network(x, i)
-    network_info = get_information(network, data, labels)
-    network_info_squeezed = np.squeeze(np.array(network_info))
-    I_XT_array = np.array(extract_array(network_info_squeezed, 'local_IXT'))
-    I_TY_array = np.array(extract_array(network_info_squeezed, 'local_ITY'))
-    plt.plot(I_XT_array, I_TY_array)
+    I_XT_array = np.array([])
+    I_TY_array = np.array([])
+    for j in range(5):
+        print("repeat", j)
+        network = train_neural_network(x, i)
+        network_info = get_information(network, data, labels, i)
+        network_info_squeezed = np.squeeze(np.array(network_info))
+        I_XT = np.array(extract_array(network_info_squeezed, 'local_IXT'))
+        I_XT_array = np.append(I_XT_array, I_XT)
+        I_TY = np.array(extract_array(network_info_squeezed, 'local_ITY'))
+        I_TY_array = np.append(I_TY_array, I_TY)
+    plt.scatter(I_XT_array, I_TY_array, color=color)
     plt.title(i)
-    plt.savefig("Mutual_information"+str(i)+".png")
+    plt.ylim([0,1])
+    plt.xlim([0,12])
+    plt.savefig("Mutual_information_dots"+str(i)+".png")
     plt.show()

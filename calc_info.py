@@ -74,14 +74,18 @@ def calc_information_for_epoch(iter_index, ws_iter_index, unique_inverse_x,
 	return params
 
 
-def get_information(ws, x, label):
+def get_information(ws, x, label, epoch_num=-1):
     pys, pys1, p_y_given_x, b1, b, unique_a, unique_inverse_x, unique_inverse_y, pxs = extract_probs(label, x)
-    params = np.array([calc_information_for_epoch
-                        (i, ws[i], unique_inverse_x, unique_inverse_y, label,
-                        b, b1, len(unique_a), pys, pxs, p_y_given_x, pys1)
-                        for i in range(len(ws))])
+    if epoch_num == -1:
+        params = np.array([calc_information_for_epoch
+	                        (i, ws[i], unique_inverse_x, unique_inverse_y, label,
+	                        b, b1, len(unique_a), pys, pxs, p_y_given_x, pys1)
+	                        for i in range(len(ws))])
+    else:
+        params = calc_information_for_epoch(epoch_num-1, ws[epoch_num-1], unique_inverse_x, unique_inverse_y, label,
+	                        b, b1, len(unique_a), pys, pxs, p_y_given_x, pys1)
     return params
 
 def extract_array(data, name):
-    results = [[data[j,k][name] for k in range(data.shape[1])] for j in range(data.shape[0])]
+    results = [[data[j,][name]] for j in range(data.shape[0])]
     return results
