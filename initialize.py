@@ -5,23 +5,26 @@ import os
 import sys
 import tensorflow as tf
 import random
+from calc_info import get_information, extract_array
+import matplotlib.pyplot as plt
+
 
 
 def load_data(name, random_labels=False):
-	"""Load the data
-	name - the name of the dataset
-	random_labels - True if we want to return random labels to the dataset
-	return object with data and labels"""
-	C = type('type_C', (object,), {})
-	data_sets = C()
-	d = sio.loadmat(os.path.join(os.getcwd(), name + '.mat'))
-	F = d['F']
-	y = d['y']
-	C = type('type_C', (object,), {})
-	data_sets = C()
-	data_sets.data = F
-	data_sets.labels = np.squeeze(np.concatenate((y[None, :], 1 - y[None, :]), axis=0).T)
-	return data_sets
+    """Load the data
+    name - the name of the dataset
+    random_labels - True if we want to return random labels to the dataset
+    return object with data and labels"""
+    C = type('type_C', (object,), {})
+    data_sets = C()
+    d = sio.loadmat(os.path.join(os.getcwd(), name + '.mat'))
+    F = d['F']
+    y = d['y']
+    C = type('type_C', (object,), {})
+    data_sets = C()
+    data_sets.data = F
+    data_sets.labels = np.squeeze(np.concatenate((y[None, :], 1 - y[None, :]), axis=0).T)
+    return data_sets
 
 
 dataset = load_data("var_u")
@@ -34,11 +37,6 @@ data.shape
 data[0]
 labels.shape
 labels[0]
-
-# train_data = data[:3000]
-# train_labels = labels[:3000]
-# test_data = data[3000:]
-# test_labels = labels[3000:]
 
 test = random.sample(xrange(4096), 1000)
 train = ([i for i in xrange(4096) if i not in test])
@@ -66,6 +64,8 @@ n_classes = 2
 batch_size = 500
 x = tf.placeholder(tf.float32, [None, 12])
 y = tf.placeholder(tf.float32)
+batch_points = [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4096]
+
 
 def neural_network_model(data):
     hidden_1_layer = {'weights':tf.Variable(tf.truncated_normal(
@@ -120,20 +120,39 @@ def neural_network_model(data):
 
     l7 = tf.add(tf.matmul(l6,hidden_7_layer['weights']), hidden_7_layer['biases'])
     l7 = tf.nn.tanh(l7)
-
     output = tf.matmul(l7,output_layer['weights']) + output_layer['biases']
-    return tf.nn.softmax(output)
+    output = tf.nn.softmax(output)
+    layers = [l1, l2, l3, l4, l5, l6, l7, output]
+    return layers
+
+def extract_activity(sess, layers):
+    """Get the activation values of the layers for the input"""
+    w_temp = []
+    i=0
+    for i in range(0, len(batch_points) - 1):
+        batch_x = np.array(data[batch_points[i]:batch_points[i+1]])
+        batch_y = np.array(labels[batch_points[i]:batch_points[i+1]])
+        w_temp_local = sess.run([layers], feed_dict={x: batch_x, y: batch_y})
+        # print(w_temp_local)
+        for s in range(len(w_temp_local[0])):
+            if i == 0:
+                w_temp.append(w_temp_local[0][s])
+            else:
+                w_temp[s] = np.concatenate((w_temp[s], w_temp_local[0][s]), axis=0)
+    return w_temp
 
 def train_neural_network(x, num_epochs):
-    prediction = neural_network_model(x)
-    cross_entropy = tf.reduce_mean(
-        -tf.reduce_sum(y*tf.log(tf.clip_by_value(prediction,1e-50,1.0)), reduction_indices=[1]))
+    layers = neural_network_model(x)
+    prediction = layers[-1]
+    cross_entropy = tf.reduce_mean(-tf.reduce_sum(y*tf.log(tf.clip_by_value(prediction,1e-50,1.0)), reduction_indices=[1]))
     optimizer = tf.train.AdamOptimizer(learning_rate=0.0004).minimize(cross_entropy)
     hm_epochs = num_epochs
+    ws, estimted_label, gradients, infomration, models, weights = [[None] * num_epochs for _ in range(6)]
     tf.set_random_seed(1234)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         for epoch in range(hm_epochs):
+            ws[epoch] = extract_activity(sess, layers)
             epoch_loss = 0
             i=0
             while i < len(train_data):
@@ -145,18 +164,43 @@ def train_neural_network(x, num_epochs):
                                                                         y: batch_y})
                 epoch_loss += c
                 i+=batch_size
-            print('Epoch', epoch, 'completed out of',hm_epochs,'loss:',epoch_loss)
+            # print('Epoch', epoch, 'completed out of',hm_epochs,'loss:',epoch_loss)
         correct = tf.equal(tf.argmax(prediction, 1), tf.argmax(y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
         print('Accuracy_test:',accuracy.eval({x:test_data, y:test_labels}),
             'Accuracy_train:',accuracy.eval({x:train_data, y:train_labels}))
+    return ws
 
 # np.random.seed(2)
-train_neural_network(x, 10)
-train_neural_network(x, 50)
-train_neural_network(x, 100)
-train_neural_network(x, 200)
-train_neural_network(x, 500)
-train_neural_network(x, 750)
-train_neural_network(x, 1000)
-train_neural_network(x, 2000)
+# network_10 = train_neural_network(x, 10)
+# network_10_info = get_information(info, data, labels)
+# network_10_info = np.squeeze(np.array(network_10_info))
+# I_XT_array = np.array(extract_array(network_10_info, 'local_IXT'))
+# I_TY_array = np.array(extract_array(network_10_info, 'local_ITY'))
+# plt.plot(I_XT_array, I_TY_array)
+# plt.title(10)
+# plt.show()
+
+# train_neural_network(x, 10)
+# train_neural_network(x, 50)
+# train_neural_network(x, 100)
+# train_neural_network(x, 200)
+# train_neural_network(x, 500)
+# train_neural_network(x, 750)
+# train_neural_network(x, 1000)
+# train_neural_network(x, 2000)
+
+
+# Train networks of varying number of epochs and calculate mutual information between layers
+epochs_list = [5]
+for i in epochs_list:
+    print("CURRENTLY ON EPOCH NUM", i)
+    network = train_neural_network(x, i)
+    network_info = get_information(network, data, labels)
+    network_info_squeezed = np.squeeze(np.array(network_info))
+    I_XT_array = np.array(extract_array(network_info_squeezed, 'local_IXT'))
+    I_TY_array = np.array(extract_array(network_info_squeezed, 'local_ITY'))
+    plt.plot(I_XT_array, I_TY_array)
+    plt.title(i)
+    plt.savefig("Mutual_information"+str(i)+".png")
+    plt.show()
