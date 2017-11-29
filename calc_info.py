@@ -1,6 +1,11 @@
 import numpy as np
 from mutual_information_calc import *
 
+#######################################
+# GET INFORMATION FROM NEURAL NETWORK #
+#######################################
+# based on source code https://github.com/ravidziv/IDNNs
+
 
 # set global variables to discretize outputs of layers
 bins = np.linspace(-1, 1, 30)
@@ -30,7 +35,7 @@ def extract_probs(label, x):
 	return pys, pys1, p_y_given_x, b1, b, unique_a, unique_inverse_x, unique_inverse_y, pxs
 
 
-#
+# calculates mutual information based on the sampled discretized values
 def calc_information_sampling(data, bins, pys1, pxs, label, b, b1, len_unique_a, p_YgX, unique_inverse_x,
                               unique_inverse_y):
 	bins = bins.astype(np.float32)
@@ -45,22 +50,6 @@ def calc_information_sampling(data, bins, pys1, pxs, label, b, b1, len_unique_a,
 	PXs, PYs = np.asarray(pxs).T, np.asarray(pys1).T
 	local_IXT, local_ITY = calc_information_from_mat(PXs, PYs, p_ts, digitized, unique_inverse_x, unique_inverse_y,
 	                                                 unique_array)
-	return local_IXT, local_ITY
-
-
-def calc_information_for_layer_with_other(data, unique_inverse_x, unique_inverse_y, label,
-                                          b, b1, len_unique_a, pxs, p_YgX, pys1,
-                                          percent_of_sampling=50):
-	local_IXT, local_ITY = calc_information_sampling(data, bins, pys1, pxs, label, b, b1,
-	                                                 len_unique_a, p_YgX, unique_inverse_x,
-	                                                 unique_inverse_y)
-	number_of_indexs = int(data.shape[1] * (1. / 100 * percent_of_sampling))
-	indexs_of_sampls = np.random.choice(data.shape[1], number_of_indexs, replace=False)
-	if percent_of_sampling != 100:
-		sampled_data = data[:, indexs_of_sampls]
-		sampled_local_IXT, sampled_local_ITY = calc_information_sampling(
-			sampled_data, bins, pys1, pxs, label, b, b1, len_unique_a, p_YgX, unique_inverse_x, unique_inverse_y)
-
 	params = {}
 	params['local_IXT'] = local_IXT
 	params['local_ITY'] = local_ITY
@@ -72,11 +61,11 @@ def calc_information_for_epoch(iter_index, ws_iter_index, unique_inverse_x,
                                unique_inverse_y, label, b, b1,
                                len_unique_a, pys, pxs, py_x, pys1):
 	params = np.array(
-			[calc_information_for_layer_with_other(data=ws_iter_index[i], unique_inverse_x=unique_inverse_x,
-			                                       unique_inverse_y=unique_inverse_y, label=label,
-			                                       b=b, b1=b1, len_unique_a=len_unique_a, pxs=pxs,
-			                                       p_YgX=py_x, pys1=pys1)
+			[calc_information_sampling(ws_iter_index[i], bins, pys1, pxs, label, b, b1,
+			                                                 len_unique_a, py_x, unique_inverse_x,
+			                                                 unique_inverse_y)
                                                    for i in range(len(ws_iter_index))])
+
 	return params
 
 

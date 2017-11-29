@@ -4,6 +4,11 @@ import numpy as np
 import multiprocessing
 from joblib import Parallel, delayed
 
+#######################################
+# CALCULATIONS FOR MUTUAL INFORMATION #
+#######################################
+# from source code https://github.com/ravidziv/IDNNs
+
 NUM_CORES = multiprocessing.cpu_count()
 
 

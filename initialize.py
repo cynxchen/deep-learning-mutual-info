@@ -1,5 +1,4 @@
 import numpy as np
-from tensorflow.examples.tutorials.mnist import input_data
 import scipy.io as sio
 import os
 import sys
@@ -8,7 +7,11 @@ import random
 from calc_info import get_information, extract_array
 import matplotlib.pyplot as plt
 
+######################
+# -- PREPARE DATA -- #
+######################
 
+# load data from file
 def load_data(name, random_labels=False):
     """Load the data
     name - the name of the dataset
@@ -45,7 +48,11 @@ test_labels = labels[test]
 (test_labels[:,1] == 1).sum()
 (test_labels[:,0] == 1).sum()
 
-#---------- tutorial code https://pythonprogramming.net/tensorflow-neural-network-session-machine-learning-tutorial/?completed=/tensorflow-deep-neural-network-machine-learning-tutorial/
+
+#############################################
+# -- BUILD AND TRAIN DEEP NEURAL NETWORK -- #
+#############################################
+# based on tutorial code https://pythonprogramming.net/tensorflow-neural-network-session-machine-learning-tutorial/?completed=/tensorflow-deep-neural-network-machine-learning-tutorial/
 
 n_nodes_hl1 = 12
 n_nodes_hl2 = 10
@@ -61,6 +68,7 @@ y = tf.placeholder(tf.float32)
 batch_points = [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4096]
 
 
+# build neural network
 def neural_network_model(data):
     hidden_1_layer = {'weights':tf.Variable(tf.truncated_normal(
         [12, n_nodes_hl1], mean=0.0, stddev=1.0 / np.sqrt(float(n_nodes_hl1)))),
@@ -120,6 +128,7 @@ def neural_network_model(data):
     return layers
 
 
+# get output values from each layer
 def extract_activity(sess, layers):
     """Get the activation values of the layers for the input"""
     w_temp = []
@@ -137,6 +146,7 @@ def extract_activity(sess, layers):
     return w_temp
 
 
+# train the neural network given a number of epochs
 def train_neural_network(x, num_epochs):
     layers = neural_network_model(x)
     prediction = layers[-1]
@@ -168,9 +178,24 @@ def train_neural_network(x, num_epochs):
     return ws
 
 
-# Train networks of varying number of epochs and calculate mutual information between layers
-epochs_list = [20]
-color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b']
+# plot information Plane
+def plot_info_plane(i, I_XT_array, I_TY_array):
+    color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b']
+    plt.scatter(I_XT_array, I_TY_array, color=color)
+    plt.title("Information Plane after " + str(i) + " Epochs")
+    plt.ylim([0,1])
+    plt.xlim([0,12])
+    plt.xlabel('I(X;T)')
+    plt.ylabel('I(T;Y)')
+    plt.savefig("plots/final/snapshot"+str(i)+".png")
+    plt.show()
+
+
+#############################################
+# -- RUN NEURAL NETWORK AND CREATE PLOTS -- #
+#############################################
+
+epochs_list = [250]
 for i in epochs_list:
     print("CURRENTLY ON EPOCH NUM", i)
     I_XT_array = np.array([])
@@ -184,9 +209,4 @@ for i in epochs_list:
         I_XT_array = np.append(I_XT_array, I_XT)
         I_TY = np.array(extract_array(network_info_squeezed, 'local_ITY'))
         I_TY_array = np.append(I_TY_array, I_TY)
-    plt.scatter(I_XT_array, I_TY_array, color=color)
-    plt.title(i)
-    plt.ylim([0,1])
-    plt.xlim([0,12])
-    plt.savefig("plots/Mutual_information_dots"+str(i)+".png")
-    plt.show()
+    plot_info_plane(i, I_XT_array, I_TY_array)
