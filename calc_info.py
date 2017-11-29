@@ -2,9 +2,12 @@ import numpy as np
 from mutual_information_calc import *
 
 
+# set global variables to discretize outputs of layers
 bins = np.linspace(-1, 1, 30)
 interval_information_display = 30
 
+
+# give probabilities to discretized values of the outputs of layers
 def extract_probs(label, x):
 	"""calculate the probabilities of the given data and labels p(x), p(y) and (y|x)"""
 	pys = np.sum(label, axis=0) / float(label.shape[0])
@@ -26,8 +29,10 @@ def extract_probs(label, x):
 	pys1 = unique_counts_y / float(np.sum(unique_counts_y))
 	return pys, pys1, p_y_given_x, b1, b, unique_a, unique_inverse_x, unique_inverse_y, pxs
 
+
+#
 def calc_information_sampling(data, bins, pys1, pxs, label, b, b1, len_unique_a, p_YgX, unique_inverse_x,
-                              unique_inverse_y, calc_DKL=False):
+                              unique_inverse_y):
 	bins = bins.astype(np.float32)
 	num_of_bins = bins.shape[0]
 
@@ -41,6 +46,7 @@ def calc_information_sampling(data, bins, pys1, pxs, label, b, b1, len_unique_a,
 	local_IXT, local_ITY = calc_information_from_mat(PXs, PYs, p_ts, digitized, unique_inverse_x, unique_inverse_y,
 	                                                 unique_array)
 	return local_IXT, local_ITY
+
 
 def calc_information_for_layer_with_other(data, unique_inverse_x, unique_inverse_y, label,
                                           b, b1, len_unique_a, pxs, p_YgX, pys1,
@@ -61,10 +67,10 @@ def calc_information_for_layer_with_other(data, unique_inverse_x, unique_inverse
 	return params
 
 
+# calculates mutual information after a specific number of epochs
 def calc_information_for_epoch(iter_index, ws_iter_index, unique_inverse_x,
                                unique_inverse_y, label, b, b1,
                                len_unique_a, pys, pxs, py_x, pys1):
-	print("iter", iter_index)
 	params = np.array(
 			[calc_information_for_layer_with_other(data=ws_iter_index[i], unique_inverse_x=unique_inverse_x,
 			                                       unique_inverse_y=unique_inverse_y, label=label,
@@ -74,7 +80,10 @@ def calc_information_for_epoch(iter_index, ws_iter_index, unique_inverse_x,
 	return params
 
 
+# main method to call to collect mutual information values from layers
 def get_information(ws, x, label, epoch_num=-1):
+	# parameter epoch_num represents at what stage we want to collect the mutual information
+	# if epoch_num = -1, we collect mutual information from the evolution of epochs
     pys, pys1, p_y_given_x, b1, b, unique_a, unique_inverse_x, unique_inverse_y, pxs = extract_probs(label, x)
     if epoch_num == -1:
         params = np.array([calc_information_for_epoch
@@ -86,6 +95,8 @@ def get_information(ws, x, label, epoch_num=-1):
 	                        b, b1, len(unique_a), pys, pxs, p_y_given_x, pys1)
     return params
 
+
+# extract mutual information values from numpy.array cleanly
 def extract_array(data, name):
     results = [[data[j,][name]] for j in range(data.shape[0])]
     return results

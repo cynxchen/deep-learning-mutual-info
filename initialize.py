@@ -9,7 +9,6 @@ from calc_info import get_information, extract_array
 import matplotlib.pyplot as plt
 
 
-
 def load_data(name, random_labels=False):
     """Load the data
     name - the name of the dataset
@@ -31,13 +30,7 @@ dataset = load_data("var_u")
 data = dataset.data
 labels = dataset.labels
 
-# EXPLORING
-
-data.shape
-data[0]
-labels.shape
-labels[0]
-
+# Split data in test and train
 test = random.sample(xrange(4096), 1000)
 train = ([i for i in xrange(4096) if i not in test])
 
@@ -46,6 +39,7 @@ train_labels = labels[train]
 test_data = data[test]
 test_labels = labels[test]
 
+# Check if the labels are proportional in the test and train groups
 (train_labels[:,1] == 1).sum()
 (train_labels[:,0] == 1).sum()
 (test_labels[:,1] == 1).sum()
@@ -125,6 +119,7 @@ def neural_network_model(data):
     layers = [l1, l2, l3, l4, l5, l6, l7, output]
     return layers
 
+
 def extract_activity(sess, layers):
     """Get the activation values of the layers for the input"""
     w_temp = []
@@ -140,6 +135,7 @@ def extract_activity(sess, layers):
             else:
                 w_temp[s] = np.concatenate((w_temp[s], w_temp_local[0][s]), axis=0)
     return w_temp
+
 
 def train_neural_network(x, num_epochs):
     layers = neural_network_model(x)
@@ -172,19 +168,9 @@ def train_neural_network(x, num_epochs):
     return ws
 
 
-# train_neural_network(x, 10)
-# train_neural_network(x, 50)
-# train_neural_network(x, 100)
-# train_neural_network(x, 200)
-# train_neural_network(x, 500)
-# train_neural_network(x, 750)
-# train_neural_network(x, 1000)
-# train_neural_network(x, 2000)
-
-
 # Train networks of varying number of epochs and calculate mutual information between layers
-epochs_list = [100, 400, 1000]
-color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b'] * 10
+epochs_list = [20]
+color = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'b']
 for i in epochs_list:
     print("CURRENTLY ON EPOCH NUM", i)
     I_XT_array = np.array([])
@@ -202,5 +188,5 @@ for i in epochs_list:
     plt.title(i)
     plt.ylim([0,1])
     plt.xlim([0,12])
-    plt.savefig("Mutual_information_dots"+str(i)+".png")
+    plt.savefig("plots/Mutual_information_dots"+str(i)+".png")
     plt.show()
